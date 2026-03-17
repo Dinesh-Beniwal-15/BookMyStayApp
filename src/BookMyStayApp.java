@@ -1,65 +1,109 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ===============================================================
- * CLASS - RoomInventory
+ * CLASS - AddOnService
  * ===============================================================
  *
- * Use Case 3: Centralized Room Inventory Management
+ * Represents an optional service.
  *
- * Description:
- * This class acts as the single source of truth
- * for room availability in the hotel.
- *
- * @version 3.1
+ * @version 7.0
  */
 
-class RoomInventory {
+class AddOnService {
+
+    /** Name of the service */
+    private String serviceName;
+
+    /** Cost of the service */
+    private double cost;
 
     /**
-     * Stores available room count for each room type
-     *
-     * Key   -> Room type name
-     * Value -> Available room count
+     * Creates a new add-on service
      */
-    private Map<String, Integer> roomAvailability;
+    public AddOnService(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public double getCost() {
+        return cost;
+    }
+}
+
+
+/**
+ * ===============================================================
+ * CLASS - AddOnServiceManager
+ * ===============================================================
+ *
+ * Manages services for reservations.
+ *
+ * @version 7.0
+ */
+
+class AddOnServiceManager {
 
     /**
-     * Constructor initializes the inventory
-     * with default availability values
+     * Key   -> Reservation ID
+     * Value -> List of services
      */
-    public RoomInventory() {
+    private Map<String, List<AddOnService>> servicesByReservation;
 
-        roomAvailability = new HashMap<>();
-
-        initializeInventory();
+    public AddOnServiceManager() {
+        servicesByReservation = new HashMap<>();
     }
 
     /**
-     * Initializes room availability data
+     * Adds service to a reservation
      */
-    private void initializeInventory() {
+    public void addService(String reservationId, AddOnService service) {
 
-        roomAvailability.put("Single", 5);
-        roomAvailability.put("Double", 3);
-        roomAvailability.put("Suite", 2);
+        servicesByReservation
+                .computeIfAbsent(reservationId, k -> new ArrayList<>())
+                .add(service);
     }
 
     /**
-     * Returns the availability map
+     * Calculates total cost of services
      */
-    public Map<String, Integer> getRoomAvailability() {
+    public double calculateTotalServiceCost(String reservationId) {
 
-        return roomAvailability;
+        List<AddOnService> services = servicesByReservation.get(reservationId);
+
+        if (services == null) return 0;
+
+        double total = 0;
+
+        for (AddOnService service : services) {
+            total += service.getCost();
+        }
+
+        return total;
     }
 
     /**
-     * Updates availability for a specific room type
+     * Displays services for a reservation
      */
-    public void updateAvailability(String roomType, int count) {
+    public void displayServices(String reservationId) {
 
-        roomAvailability.put(roomType, count);
+        List<AddOnService> services = servicesByReservation.get(reservationId);
+
+        if (services == null || services.isEmpty()) {
+            System.out.println("No add-on services selected.");
+            return;
+        }
+
+        System.out.println("Selected Services:");
+
+        for (AddOnService service : services) {
+            System.out.println("- " + service.getServiceName()
+                    + " (" + service.getCost() + ")");
+        }
     }
 }
 
@@ -69,31 +113,39 @@ class RoomInventory {
  * MAIN CLASS - BookMyStayApp
  * ===============================================================
  *
- * Use Case 3: Centralized Room Inventory Management
+ * Use Case 7: Add-On Service Selection
  *
- * Demonstrates how room availability is managed
- * using a centralized HashMap.
+ * Demonstrates attaching services to a reservation.
  *
- * @version 3.1
+ * @version 7.0
  */
 
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        System.out.println("Hotel Room Inventory Status\n");
+        System.out.println("Add-On Service Selection\n");
 
-        RoomInventory inventory = new RoomInventory();
+        String reservationId = "RES-101";
 
-        Map<String, Integer> availability = inventory.getRoomAvailability();
+        AddOnServiceManager manager = new AddOnServiceManager();
 
-        System.out.println("Single Room Available Rooms: "
-                + availability.get("Single"));
+        // Create services
+        AddOnService breakfast = new AddOnService("Breakfast", 500);
+        AddOnService spa = new AddOnService("Spa", 1200);
+        AddOnService pickup = new AddOnService("Airport Pickup", 800);
 
-        System.out.println("Double Room Available Rooms: "
-                + availability.get("Double"));
+        // Add services to reservation
+        manager.addService(reservationId, breakfast);
+        manager.addService(reservationId, spa);
+        manager.addService(reservationId, pickup);
 
-        System.out.println("Suite Room Available Rooms: "
-                + availability.get("Suite"));
+        // Display services
+        manager.displayServices(reservationId);
+
+        // Calculate total cost
+        double totalCost = manager.calculateTotalServiceCost(reservationId);
+
+        System.out.println("\nTotal Add-On Cost: " + totalCost);
     }
 }
